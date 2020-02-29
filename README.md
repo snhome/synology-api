@@ -52,6 +52,11 @@ or
 pip3 install git+https://github.com/N4S4/synology-api
 ```
 
+or 
+
+```
+pip3 install git+https://github.com/snhome/synology-api.git
+```
 
 ## Basic Usage
 
