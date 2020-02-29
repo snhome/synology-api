@@ -1,15 +1,18 @@
 import requests
-
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class Authentication:
-    def __init__(self, ip_address, port, username, password):
+    def __init__(self, ip_address, port, username, password, scheme='http', verifySSL=True):
         self._ip_address = ip_address
         self._port = port
         self._username = username
         self._password = password
         self._sid = None
         self._session_expire = True
-        self._base_url = 'http://%s:%s/webapi/' % (self._ip_address, self._port)
+        self.scheme = scheme
+        self.verifySSL = verifySSL
+        self._base_url = '%s://%s:%s/webapi/' % (self.scheme, self._ip_address, self._port)
 
         self.full_api_list = {}
         self.app_api_list = {}
@@ -24,7 +27,7 @@ class Authentication:
                 self._session_expire = False
                 return 'User already logged'
         else:
-            session_request = requests.get(self._base_url + login_api, param)
+            session_request = requests.get(self._base_url + login_api, param, verify=self.verifySSL)
             self._sid = session_request.json()['data']['sid']
             self._session_expire = False
             return 'User logging... New session started!'
@@ -33,7 +36,7 @@ class Authentication:
         logout_api = 'auth.cgi?api=SYNO.API.Auth'
         param = {'version': '2', 'method': 'logout', 'session': application}
 
-        response = requests.get(self._base_url + logout_api, param)
+        response = requests.get(self._base_url + logout_api, param, verify=self.verifySSL)
         if response.json()['success'] is True:
             self._session_expire = True
             self._sid = None
@@ -47,7 +50,7 @@ class Authentication:
         query_path = 'query.cgi?api=SYNO.API.Info'
         list_query = {'version': '1', 'method': 'query', 'query': 'all'}
 
-        response = requests.get(self._base_url + query_path, list_query).json()
+        response = requests.get(self._base_url + query_path, list_query, verify=self.verifySSL).json()
 
         if app is not None:
             for key in response['data']:
@@ -99,7 +102,7 @@ class Authentication:
 
         if method is 'get':
             url = ('%s%s' % (self._base_url, api_path)) + '?api=' + api_name
-            response = requests.get(url, req_param)
+            response = requests.get(url, req_param, verify=self.verifySSL)
 
             if response_json is True:
                 return response.json()
@@ -108,7 +111,7 @@ class Authentication:
 
         elif method is 'post':
             url = ('%s%s' % (self._base_url, api_path)) + '?api=' + api_name
-            response = requests.post(url, req_param)
+            response = requests.post(url, req_param, verify=self.verifySSL)
 
             if response_json is True:
                 return response.json()
